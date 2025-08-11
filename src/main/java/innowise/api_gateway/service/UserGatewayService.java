@@ -19,44 +19,54 @@ public class UserGatewayService {
 
     public Mono<UserResponseDto> createUser(UserRequestDto userRequestDto) {
         return createUserInAuthService(userRequestDto)
-                .flatMap(authResponse -> {
-                            log.info("User with id {} created in user authentication service", authResponse.getId());
-
-                            return createUserInUserService(userRequestDto, authResponse.getId())
-                                    .map(userResponse -> {
-                                        log.info("User with id {} created in user authentication service", authResponse.getId());
-
-                                        return UserResponseDto.builder()
+                .flatMap(authResponse -> createUserInUserService(userRequestDto, authResponse.getId())
+                        .flatMap(userResponse ->
+                                confirmUserInAuthService(authResponse.getId())
+                                        .map(authConfirmationResponse -> UserResponseDto.builder()
                                                 .auth(authResponse)
                                                 .user(userResponse)
-                                                .build();
-                                    });
-                        }
+                                                .build())
+                        )
                 );
     }
 
     private Mono<AuthServiceResponseDto> createUserInAuthService(UserRequestDto userRequestDto) {
         log.info("Requesting user creation in user service");
 
-        try {
-            return authServiceClient.post()
-                    .uri("/auth/signup")
-                    .bodyValue(userRequestDto.getAuth())
-                    .retrieve()
-                    .bodyToMono(AuthServiceResponseDto.class);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return Mono.error(e);
-        }
+        return authServiceClient.post()
+                .uri("/api/auth/signup")
+                .bodyValue(userRequestDto.getAuth())
+                .retrieve()
+                .bodyToMono(AuthServiceResponseDto.class)
+                .doOnError(error -> log.error("Auth service call failed: {}", error.getMessage()))
+                .doOnSuccess(authServiceResponse ->
+                        log.info("User with id {} created in authentication service", authServiceResponse.getId()));
+
+    }
+
+    private Mono<AuthServiceResponseDto> confirmUserInAuthService(Long userId) {
+        log.info("Requesting user confirmation in user service");
+
+        return authServiceClient.patch()
+                .uri("/api/auth/" + userId + "/confirm")
+                .retrieve()
+                .bodyToMono(AuthServiceResponseDto.class)
+                .doOnError(error -> log.error("Auth service call failed: {}", error.getMessage()))
+                .doOnSuccess(authServiceResponse -> {
+                    log.info("User {} creation confirmed in authentication service", authServiceResponse.getId());
+                });
     }
 
     private Mono<UserServiceResponseDto> createUserInUserService(UserRequestDto userRequestDto, Long userId) {
         log.info("Requesting user creation in authentication service");
 
         return userServiceClient.post()
-                .uri("/auth/user/" + userId)
-                .bodyValue(userRequestDto.getAuth())
+                .uri("/api/user/" + userId)
+                .bodyValue(userRequestDto.getUser())
                 .retrieve()
-                .bodyToMono(UserServiceResponseDto.class);
+                .bodyToMono(UserServiceResponseDto.class)
+                .doOnError(error -> log.error("User service call failed: {}", error.getMessage()))
+                .doOnSuccess(userServiceResponse ->
+                        log.info("User with id {} created in user service", userServiceResponse.getId()));
     }
 }

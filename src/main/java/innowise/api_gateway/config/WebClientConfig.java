@@ -8,7 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
-public class WebclientConfig {
+public class WebClientConfig {
     @Value("${services.url.user_service}")
     private String userServiceUrl;
 
