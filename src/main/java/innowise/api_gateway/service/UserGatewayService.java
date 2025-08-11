@@ -9,6 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,12 @@ public class UserGatewayService {
                                                 .auth(authResponse)
                                                 .user(userResponse)
                                                 .build())
+                        ).onErrorResume(
+                                e -> {
+                                    log.error("User creation failed");
+                                    return rollbackUserInAuthService(authResponse.getId()).
+                                            then(Mono.error(e));
+                                }
                         )
                 );
     }
@@ -38,6 +47,7 @@ public class UserGatewayService {
                 .bodyValue(userRequestDto.getAuth())
                 .retrieve()
                 .bodyToMono(AuthServiceResponseDto.class)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
                 .doOnError(error -> log.error("Auth service call failed: {}", error.getMessage()))
                 .doOnSuccess(authServiceResponse ->
                         log.info("User with id {} created in authentication service", authServiceResponse.getId()));
@@ -51,9 +61,24 @@ public class UserGatewayService {
                 .uri("/api/auth/" + userId + "/confirm")
                 .retrieve()
                 .bodyToMono(AuthServiceResponseDto.class)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
                 .doOnError(error -> log.error("Auth service call failed: {}", error.getMessage()))
                 .doOnSuccess(authServiceResponse -> {
                     log.info("User {} creation confirmed in authentication service", authServiceResponse.getId());
+                });
+    }
+
+    private Mono<Void> rollbackUserInAuthService(Long userId) {
+        log.info("Requesting user deletion in user service");
+
+        return authServiceClient.patch()
+                .uri("/api/auth/" + userId + "/rollback")
+                .retrieve()
+                .bodyToMono(Void.class)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
+                .doOnError(error -> log.error("Auth service call failed: {}", error.getMessage()))
+                .doOnSuccess(authServiceResponse -> {
+                    log.info("User {} rollbacked in authentication service", userId);
                 });
     }
 
@@ -65,6 +90,7 @@ public class UserGatewayService {
                 .bodyValue(userRequestDto.getUser())
                 .retrieve()
                 .bodyToMono(UserServiceResponseDto.class)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(1)))
                 .doOnError(error -> log.error("User service call failed: {}", error.getMessage()))
                 .doOnSuccess(userServiceResponse ->
                         log.info("User with id {} created in user service", userServiceResponse.getId()));
