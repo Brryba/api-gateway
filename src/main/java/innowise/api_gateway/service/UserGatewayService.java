@@ -1,7 +1,7 @@
 package innowise.api_gateway.service;
 
-import innowise.api_gateway.dto.UserRequestDto;
-import innowise.api_gateway.dto.UserResponseDto;
+import innowise.api_gateway.dto.combined.UserRequestDto;
+import innowise.api_gateway.dto.combined.UserResponseDto;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 

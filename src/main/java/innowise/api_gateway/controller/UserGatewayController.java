@@ -1,7 +1,7 @@
 package innowise.api_gateway.controller;
 
-import innowise.api_gateway.dto.UserRequestDto;
-import innowise.api_gateway.dto.UserResponseDto;
+import innowise.api_gateway.dto.combined.UserRequestDto;
+import innowise.api_gateway.dto.combined.UserResponseDto;
 import innowise.api_gateway.service.UserGatewayService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

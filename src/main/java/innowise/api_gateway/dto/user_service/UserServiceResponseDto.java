@@ -1,4 +1,4 @@
-package innowise.api_gateway.dto;
+package innowise.api_gateway.dto.user_service;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;

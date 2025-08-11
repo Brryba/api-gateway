@@ -1,4 +1,4 @@
-package innowise.api_gateway.dto;
+package innowise.api_gateway.dto.auth_service;
 
 import lombok.Builder;
 import lombok.Data;
