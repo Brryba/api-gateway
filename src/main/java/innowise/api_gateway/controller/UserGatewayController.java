@@ -22,6 +22,6 @@ public class UserGatewayController {
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserResponseDto> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
-        return userGatewayService.createUser(Mono.fromSupplier(() -> userRequestDto));
+        return userGatewayService.createUser(userRequestDto);
     }
 }

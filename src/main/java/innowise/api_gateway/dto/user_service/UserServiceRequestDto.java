@@ -4,9 +4,14 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
 import java.time.LocalDate;
 
+@Data
+@Builder
 public class UserServiceRequestDto {
     @NotBlank(message = "Name is required")
     @Size(max = 100, message = "Name must not be longer than 100 letters")
