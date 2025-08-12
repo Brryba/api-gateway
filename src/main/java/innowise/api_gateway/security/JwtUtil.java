@@ -1,6 +1,6 @@
 package innowise.api_gateway.security;
 
-import innowise.api_gateway.exception.InvalidJwtTokenException;
+import innowise.api_gateway.exception.security.InvalidJwtTokenException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
