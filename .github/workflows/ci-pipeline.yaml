@@ -47,7 +47,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t api-gateway-docker-image .
+          docker build -t api-gateway-docker-image -f Dockerfile.ci .
 
       - name: Run Docker container
         env:
@@ -91,7 +91,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JWT_KEY: ${{ secrets.JWT_KEY }}
         run: |
-          mvn -B -X verify \
+          mvn -B verify \
             org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \
             -Dsonar.projectKey=innowise:api-gateway \
             -Dsonar.organization=brryba \
