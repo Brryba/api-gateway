@@ -2,7 +2,6 @@ package innowise.api_gateway.controller;
 
 import innowise.api_gateway.dto.error.ErrorDto;
 import innowise.api_gateway.exception.StatusCodeAbstractException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

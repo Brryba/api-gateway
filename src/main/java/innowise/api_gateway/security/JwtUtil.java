@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 
 @Component
+@Slf4j
 public class JwtUtil {
     @Value("${JWT_KEY}")
     private String jwtKey;
@@ -22,14 +24,16 @@ public class JwtUtil {
         this.key = Keys.hmacShaKeyFor(jwtKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    public boolean isTokenValid(String accessToken) {
+    public void validateJwtToken(String accessToken) throws InvalidJwtTokenException {
+        log.info("Validating Bearer token: {}", accessToken);
         JwtParser jwtParser = Jwts.parser().
                 verifyWith(key)
                 .build();
         try {
             jwtParser.parse(accessToken);
-            return true;
+            log.info("WT token {} is valid", accessToken);
         } catch (Exception e) {
+            log.warn("JWT token {} is invalid: {}", accessToken, e.getMessage());
             throw new InvalidJwtTokenException(e.getMessage());
         }
     }

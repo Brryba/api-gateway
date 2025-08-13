@@ -1,5 +1,6 @@
 package innowise.api_gateway.filters;
 
+import innowise.api_gateway.exception.security.InvalidJwtTokenException;
 import innowise.api_gateway.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +24,9 @@ public class AuthenticationSecurityFilter implements WebFilter {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             authHeader = authHeader.replace("Bearer ", "");
-            if (jwtUtil.isTokenValid(authHeader)) {
+
+            try {
+                jwtUtil.validateJwtToken(authHeader);
                 Long userId = jwtUtil.getUserIdFromToken(authHeader);
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userId,
@@ -32,6 +35,8 @@ public class AuthenticationSecurityFilter implements WebFilter {
 
                 return chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authToken));
+            } catch (InvalidJwtTokenException e) {
+                return chain.filter(exchange);
             }
         }
 
