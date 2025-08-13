@@ -3,20 +3,16 @@ package innowise.api_gateway.service;
 import innowise.api_gateway.dto.auth_service.AuthServiceResponseDto;
 import innowise.api_gateway.dto.combined.UserRequestDto;
 import innowise.api_gateway.dto.user_service.UserServiceResponseDto;
-import innowise.api_gateway.exception.service_calls.ClientServiceException;
-import innowise.api_gateway.exception.service_calls.InternalServiceException;
+import innowise.api_gateway.exception.service_calls.ClientService4xxException;
+import innowise.api_gateway.exception.service_calls.InternalService5xxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -84,15 +80,15 @@ public class UserGatewayClient {
     }
 
     private Mono<Throwable> handle5xxError(ClientResponse clientResponse) {
-        return Mono.error(new InternalServiceException("Server error"));
+        return Mono.error(new InternalService5xxException("Server error"));
     }
 
     private Mono<Throwable> handle4xxError(ClientResponse clientResponse) {
         return clientResponse.bodyToMono(String.class).flatMap(body -> Mono.error(
-                new ClientServiceException(HttpStatus.valueOf(clientResponse.statusCode().value()), body)));
+                new ClientService4xxException(HttpStatus.valueOf(clientResponse.statusCode().value()), body)));
     }
 
     private boolean shouldRetry(Throwable ex) {
-        return ex instanceof WebClientRequestException || ex instanceof InternalServiceException;
+        return ex instanceof WebClientRequestException || ex instanceof InternalService5xxException;
     }
 }

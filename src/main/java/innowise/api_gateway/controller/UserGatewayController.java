@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserGatewayController {
     private final UserGatewayService userGatewayService;
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserResponseDto> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
         return userGatewayService.createUser(userRequestDto);

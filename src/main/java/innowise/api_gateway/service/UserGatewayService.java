@@ -4,6 +4,7 @@ import innowise.api_gateway.dto.auth_service.AuthServiceResponseDto;
 import innowise.api_gateway.dto.combined.UserRequestDto;
 import innowise.api_gateway.dto.combined.UserResponseDto;
 import innowise.api_gateway.dto.user_service.UserServiceResponseDto;
+import innowise.api_gateway.exception.service_calls.ClientService4xxException;
 import innowise.api_gateway.exception.service_calls.RollbackFailedException;
 import innowise.api_gateway.exception.service_calls.UserCreationException;
 import lombok.RequiredArgsConstructor;
@@ -34,13 +35,14 @@ public class UserGatewayService {
                 .build();
     }
 
-    private Mono<UserResponseDto> handleUserServiceFailure(AuthServiceResponseDto authResponse, Throwable e) {
-        log.error("UserService failed for authId={}. Rolling back...", authResponse.getId(), e);
+    private Mono<UserResponseDto> handleUserServiceFailure(AuthServiceResponseDto authResponse, Throwable ex) {
+        log.error("UserService failed for authId={}. Rolling back...", authResponse.getId(), ex);
         return gatewayClient.rollbackUserInAuthService(authResponse.getId())
                 .onErrorResume(rollbackEx -> {
                     log.error("CRITICAL: Rollback failed for authId={}", authResponse.getId(), rollbackEx);
                     return Mono.error(new RollbackFailedException("User creation failed. Try again later."));
                 })
-                .then(Mono.error(new UserCreationException("User creation failed. Try again later.")));
+                .then(Mono.error(ex instanceof ClientService4xxException ? ex :
+                        new UserCreationException("User creation failed. Try again later.")));
     }
 }

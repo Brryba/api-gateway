@@ -20,7 +20,8 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .addFilterAt(authenticationSecurityFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .authorizeExchange(exchange -> {
-                    exchange.pathMatchers("/api/auth/**").permitAll();
+                    exchange.pathMatchers("api/auth/**").permitAll();
+                    exchange.pathMatchers("/api/register").permitAll();
                     exchange.anyExchange().authenticated();
                 })
                 .exceptionHandling(exceptionHandling -> exceptionHandling
