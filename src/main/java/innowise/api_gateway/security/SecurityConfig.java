@@ -4,6 +4,7 @@ import innowise.api_gateway.filters.AuthenticationSecurityFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -20,7 +21,12 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .addFilterAt(authenticationSecurityFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .authorizeExchange(exchange -> {
-                    exchange.pathMatchers("api/auth/**").permitAll();
+                    exchange.pathMatchers(HttpMethod.POST, "/api/auth/**").denyAll();
+                    exchange.pathMatchers(HttpMethod.DELETE, "/api/auth/**").denyAll();
+                    exchange.pathMatchers("/api/auth/**").permitAll();
+
+                    exchange.pathMatchers(HttpMethod.POST, "/api/user/**").denyAll();
+
                     exchange.pathMatchers("/api/register").permitAll();
                     exchange.anyExchange().authenticated();
                 })

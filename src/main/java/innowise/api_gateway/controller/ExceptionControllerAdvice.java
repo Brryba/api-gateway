@@ -37,7 +37,7 @@ public class ExceptionControllerAdvice {
         ValidationErrorDto validationError = ValidationErrorDto.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.value() + " " + HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.value() + " " + HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message("Validation Error")
                 .validationErrors(errors)
                 .path(exchange.getRequest().getPath().toString())
