@@ -21,7 +21,7 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .addFilterAt(authenticationSecurityFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .authorizeExchange(exchange -> {
-                    exchange.pathMatchers(HttpMethod.POST, "/api/auth/**").denyAll();
+                    exchange.pathMatchers(HttpMethod.POST, "/api/auth/signup").denyAll();
                     exchange.pathMatchers(HttpMethod.DELETE, "/api/auth/**").denyAll();
                     exchange.pathMatchers("/api/auth/**").permitAll();
 

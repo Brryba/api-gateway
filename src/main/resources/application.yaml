@@ -7,6 +7,9 @@ spring:
 
 services:
   url:
-    user_service: http://localhost:8080
-    auth_service: http://localhost:8081
-    order_service: http://localhost:8082
+    user_service: ${USER_SERVICE_URL:http://localhost:8080}
+    auth_service: ${AUTH_SERVICE_URL:http://localhost:8081}
+    order_service: ${ORDER_SERVICE_URL:http://localhost:8082}
+
+security:
+  jwt-key: ${JWT_KEY}
