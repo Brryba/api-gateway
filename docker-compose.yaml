@@ -1,17 +1,22 @@
 version: '3.9'
 
 services:
+  discovery-server:
+    image: 'discovery-server:latest'
+    container_name:
+      'discovery-server-container'
+
   api-gateway:
     image: 'api-gateway:latest'
     container_name:
       'api-gateway-container'
     environment:
       - JWT_KEY=${JWT_KEY}
-      - USER_SERVICE_URL=http://user-service:80
-      - AUTH_SERVICE_URL=http://auth-service:80
-      - ORDER_SERVICE_URL=http://order-service:80
+      - EUREKA_URI=http://discovery-server:8761/eureka
     ports:
       - "80:80"
+    depends_on:
+      - discovery-server
 
   order-service:
     image: 'order-service:latest'
@@ -19,13 +24,13 @@ services:
       'order-service-container'
     depends_on:
       - order-db
-      - api-gateway
+      - discovery-server
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://order-db:5432/${DB_ORDER_SCHEMA}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - JWT_KEY=${JWT_KEY}
-      - USER_SERVICE_URL=http://user-service:80
+      - EUREKA_URI=http://discovery-server:8761/eureka
 
   order-db:
     image: postgres
@@ -41,12 +46,13 @@ services:
       'auth-service-container'
     depends_on:
       - auth-db
-      - api-gateway
+      - discovery-server
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://auth-db:5432/${DB_AUTH_SCHEMA}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - JWT_KEY=${JWT_KEY}
+      - EUREKA_URI=http://discovery-server:8761/eureka
 
   auth-db:
     image: postgres
@@ -62,7 +68,7 @@ services:
     depends_on:
       - user-db
       - user-redis-cache
-      - api-gateway
+      - discovery-server
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/${DB_USER_SCHEMA}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
@@ -71,6 +77,7 @@ services:
       - SPRING_DATA_REDIS_PORT=6379
       - SPRING_DATA_REDIS_HOST=user-redis-cache
       - JWT_KEY=${JWT_KEY}
+      - EUREKA_URI=http://discovery-server:8761/eureka
 
   user-db:
     image: postgres
