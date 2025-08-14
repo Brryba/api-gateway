@@ -23,14 +23,14 @@ public class RouteConfig {
                 .route(p -> p
                         .path("/api/user/**",
                                 "/api/card/**")
-                        .uri(userServiceUrl))
+                        .uri("lb://user-service"))
                 .route(p -> p
                         .path("/api/auth/**")
-                        .uri(authServiceUrl))
+                        .uri("lb://auth-service"))
                 .route(p -> p
                         .path("/api/order/**",
                                 "/api/item/**")
-                        .uri(orderServiceUrl))
+                        .uri("lb://order-service"))
                 .build();
     }
 }

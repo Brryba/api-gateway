@@ -1,6 +1,7 @@
 package innowise.api_gateway.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -16,18 +17,23 @@ public class WebClientConfig {
     private String authServiceUrl;
 
     @Bean
-    public WebClient userServiceClient() {
+    @LoadBalanced
+    public WebClient.Builder webClientBuilder() {
         return WebClient.builder()
-                .baseUrl(userServiceUrl)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+    }
+
+    @Bean
+    public WebClient userServiceClient() {
+        return webClientBuilder()
+                .baseUrl("lb://user-service")
                 .build();
     }
 
     @Bean
-    WebClient authServiceClient() {
-        return WebClient.builder()
-                .baseUrl(authServiceUrl)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+    public WebClient authServiceClient() {
+        return webClientBuilder()
+                .baseUrl("lb://auth-service")
                 .build();
     }
 }

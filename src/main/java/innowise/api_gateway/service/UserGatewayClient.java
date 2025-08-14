@@ -22,7 +22,6 @@ import java.time.Duration;
 @RequiredArgsConstructor
 @Slf4j
 public class UserGatewayClient {
-
     private final WebClient userServiceClient;
     private final WebClient authServiceClient;
 
