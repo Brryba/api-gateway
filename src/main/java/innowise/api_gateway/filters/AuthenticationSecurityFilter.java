@@ -33,6 +33,11 @@ public class AuthenticationSecurityFilter implements WebFilter {
                         null,
                         null);
 
+                exchange = exchange.mutate()
+                        .request(builder -> builder.header("X-User-Id",
+                                userId.toString()))
+                        .build();
+
                 return chain.filter(exchange)
                         .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authToken));
             } catch (InvalidJwtTokenException e) {
