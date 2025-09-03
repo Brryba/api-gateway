@@ -28,6 +28,7 @@ public class SecurityConfig {
                     exchange.pathMatchers(HttpMethod.POST, "/api/user/**").denyAll();
 
                     exchange.pathMatchers("/api/register").permitAll();
+                    exchange.pathMatchers("/actuator/**").permitAll();
                     exchange.anyExchange().authenticated();
                 })
                 .exceptionHandling(exceptionHandling -> exceptionHandling
