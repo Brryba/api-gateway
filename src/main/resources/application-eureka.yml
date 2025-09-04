@@ -12,3 +12,10 @@ eureka:
       defaultZone: ${EUREKA_URI}
   instance:
     prefer-ip-address: true
+
+services:
+  urls:
+    user-service: lb://user-service
+    auth-service: lb://auth-service
+    order-service: lb://order-service
+    payment-service: lb://payment-service
