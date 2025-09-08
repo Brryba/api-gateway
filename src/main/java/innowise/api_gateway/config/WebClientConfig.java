@@ -10,6 +10,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
+    @Value("${services.urls.user-service}")
+    private String userServiceUrl;
+
+    @Value("${services.urls.auth-service}")
+    private String authServiceUrl;
+
     @Bean
     @LoadBalanced
     public WebClient.Builder webClientBuilder() {
@@ -20,14 +26,14 @@ public class WebClientConfig {
     @Bean
     public WebClient userServiceClient() {
         return webClientBuilder()
-                .baseUrl("lb://user-service")
+                .baseUrl(userServiceUrl)
                 .build();
     }
 
     @Bean
     public WebClient authServiceClient() {
         return webClientBuilder()
-                .baseUrl("lb://auth-service")
+                .baseUrl(authServiceUrl)
                 .build();
     }
 }
