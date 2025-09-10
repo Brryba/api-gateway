@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class InternalService5xxException extends StatusCodeAbstractException {
     public InternalService5xxException(String message) {
-        super(HttpStatus.INTERNAL_SERVER_ERROR, message);
+        super(HttpStatus.BAD_GATEWAY, message);
     }
 }
