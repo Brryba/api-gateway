@@ -46,10 +46,11 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> {
                     exchange.pathMatchers(HttpMethod.POST, "/api/auth/signup").denyAll();
                     exchange.pathMatchers(HttpMethod.DELETE, "/api/auth/**").denyAll();
-                    exchange.pathMatchers("/api/auth/**").permitAll();
 
+                    exchange.pathMatchers("/api/auth/**").permitAll();
                     exchange.pathMatchers(HttpMethod.POST, "/api/user/**").denyAll();
 
+                    exchange.pathMatchers(HttpMethod.GET, "/api/item/**").permitAll();
                     exchange.pathMatchers("/api/register").permitAll();
                     exchange.pathMatchers("/actuator/**").permitAll();
                     exchange.anyExchange().authenticated();
