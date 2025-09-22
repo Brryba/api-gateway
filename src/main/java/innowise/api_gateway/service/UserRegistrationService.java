@@ -15,14 +15,14 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserGatewayService {
+public class UserRegistrationService {
 
-    private final UserGatewayClient gatewayClient;
+    private final WebClientUtil webClientUtil;
 
     public Mono<UserResponseDto> createUser(UserRequestDto userRequestDto) {
-        return gatewayClient.createUserInAuthService(userRequestDto)
+        return webClientUtil.createUserInAuthService(userRequestDto)
                 .flatMap(authResponse ->
-                        gatewayClient.createUserInUserService(userRequestDto, authResponse.getId())
+                        webClientUtil.createUserInUserService(userRequestDto, authResponse.getId())
                                 .map(userResponse -> buildUserResponse(authResponse, userResponse))
                                 .onErrorResume(e -> handleUserServiceFailure(authResponse, e))
                 );
@@ -37,7 +37,7 @@ public class UserGatewayService {
 
     private Mono<UserResponseDto> handleUserServiceFailure(AuthServiceResponseDto authResponse, Throwable ex) {
         log.error("UserService failed for authId={}. Rolling back...", authResponse.getId(), ex);
-        return gatewayClient.rollbackUserInAuthService(authResponse.getId())
+        return webClientUtil.rollbackUserInAuthService(authResponse.getId())
                 .onErrorResume(rollbackEx -> {
                     log.error("CRITICAL: Rollback failed for authId={}", authResponse.getId(), rollbackEx);
                     return Mono.error(new RollbackFailedException("User creation failed. Try again later."));

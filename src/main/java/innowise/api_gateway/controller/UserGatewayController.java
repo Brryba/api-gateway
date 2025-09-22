@@ -2,7 +2,7 @@ package innowise.api_gateway.controller;
 
 import innowise.api_gateway.dto.combined.UserRequestDto;
 import innowise.api_gateway.dto.combined.UserResponseDto;
-import innowise.api_gateway.service.UserGatewayService;
+import innowise.api_gateway.service.UserRegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,11 +17,11 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class UserGatewayController {
-    private final UserGatewayService userGatewayService;
+    private final UserRegistrationService userRegistrationService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserResponseDto> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
-        return userGatewayService.createUser(userRequestDto);
+        return userRegistrationService.createUser(userRequestDto);
     }
 }
