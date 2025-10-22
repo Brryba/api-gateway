@@ -22,6 +22,7 @@ public class UserGatewayController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<UserResponseDto> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
-        return userRegistrationService.createUser(userRequestDto);
+        return userRegistrationService.createUser(userRequestDto)
+                .then(Mono.just(new UserResponseDto()));
     }
 }

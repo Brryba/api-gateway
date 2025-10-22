@@ -10,11 +10,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
-    @Value("${services.urls.user-service}")
-    private String userServiceUrl;
-
-    @Value("${services.urls.auth-service}")
-    private String authServiceUrl;
+    @Value("${services.urls.camunda}")
+    private String camundaUrl;
 
     @Bean
     @LoadBalanced
@@ -24,16 +21,9 @@ public class WebClientConfig {
     }
 
     @Bean
-    public WebClient userServiceClient() {
+    WebClient camundaClient() {
         return webClientBuilder()
-                .baseUrl(userServiceUrl)
-                .build();
-    }
-
-    @Bean
-    public WebClient authServiceClient() {
-        return webClientBuilder()
-                .baseUrl(authServiceUrl)
+                .baseUrl(camundaUrl)
                 .build();
     }
 }

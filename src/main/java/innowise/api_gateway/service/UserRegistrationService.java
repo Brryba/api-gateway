@@ -1,48 +1,52 @@
 package innowise.api_gateway.service;
 
-import innowise.api_gateway.dto.auth_service.AuthServiceResponseDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import innowise.api_gateway.dto.camunda.StartRegistrationRequestDto;
+import innowise.api_gateway.dto.camunda.CamundaVariableDto;
 import innowise.api_gateway.dto.combined.UserRequestDto;
-import innowise.api_gateway.dto.combined.UserResponseDto;
-import innowise.api_gateway.dto.user_service.UserServiceResponseDto;
-import innowise.api_gateway.exception.service_calls.ClientService4xxException;
-import innowise.api_gateway.exception.service_calls.RollbackFailedException;
-import innowise.api_gateway.exception.service_calls.UserCreationException;
+import innowise.api_gateway.exception.service_calls.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserRegistrationService {
+    private final WebClient camundaClient;
+    private final ObjectMapper objectMapper;
 
-    private final WebClientUtil webClientUtil;
+    public Mono<Void> createUser(UserRequestDto userRequestDto) {
+        String serializedUser;
+        try {
+            serializedUser = objectMapper.writeValueAsString(userRequestDto);
+        } catch (JsonProcessingException e) {
+            throw new BadRequestException("Unable to create user. Bad request");
+        }
 
-    public Mono<UserResponseDto> createUser(UserRequestDto userRequestDto) {
-        return webClientUtil.createUserInAuthService(userRequestDto)
-                .flatMap(authResponse ->
-                        webClientUtil.createUserInUserService(userRequestDto, authResponse.getId())
-                                .map(userResponse -> buildUserResponse(authResponse, userResponse))
-                                .onErrorResume(e -> handleUserServiceFailure(authResponse, e))
-                );
-    }
-
-    private UserResponseDto buildUserResponse(AuthServiceResponseDto auth, UserServiceResponseDto user) {
-        return UserResponseDto.builder()
-                .auth(auth)
-                .user(user)
+        CamundaVariableDto userRequestVariable = CamundaVariableDto.builder()
+                .value(serializedUser)
+                .type("Json")
                 .build();
-    }
 
-    private Mono<UserResponseDto> handleUserServiceFailure(AuthServiceResponseDto authResponse, Throwable ex) {
-        log.error("UserService failed for authId={}. Rolling back...", authResponse.getId(), ex);
-        return webClientUtil.rollbackUserInAuthService(authResponse.getId())
-                .onErrorResume(rollbackEx -> {
-                    log.error("CRITICAL: Rollback failed for authId={}", authResponse.getId(), rollbackEx);
-                    return Mono.error(new RollbackFailedException("User creation failed. Try again later."));
-                })
-                .then(Mono.error(ex instanceof ClientService4xxException ? ex :
-                        new UserCreationException("User creation failed. Try again later.")));
+        StartRegistrationRequestDto camundaRequestDto = StartRegistrationRequestDto.builder()
+                .variables(Map.of("userRequest", userRequestVariable))
+                .businessKey("user-registration")
+                .withVariablesInReturn(true)
+                .build();
+
+        return camundaClient.post()
+                .uri("/engine-rest/process-definition/key/registration_process/start")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(camundaRequestDto)
+                .retrieve()
+                .toBodilessEntity()
+                .then();
     }
 }
