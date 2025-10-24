@@ -23,9 +23,10 @@ public class UserRegistrationService {
     private final ObjectMapper objectMapper;
 
     public Mono<Void> createUser(UserRequestDto userRequestDto) {
-        String serializedUser;
+        String serializedUser, serializedAuth;
         try {
-            serializedUser = objectMapper.writeValueAsString(userRequestDto);
+            serializedUser = objectMapper.writeValueAsString(userRequestDto.getUser());
+            serializedAuth = objectMapper.writeValueAsString(userRequestDto.getAuth());
         } catch (JsonProcessingException e) {
             throw new BadRequestException("Unable to create user. Bad request");
         }
@@ -35,8 +36,15 @@ public class UserRegistrationService {
                 .type("Json")
                 .build();
 
+        CamundaVariableDto authRequestVariable = CamundaVariableDto.builder()
+                .value(serializedAuth)
+                .type("Json")
+                .build();
+
         StartRegistrationRequestDto camundaRequestDto = StartRegistrationRequestDto.builder()
-                .variables(Map.of("userRequest", userRequestVariable))
+                .variables(Map.of(
+                        "userRequest", userRequestVariable,
+                        "authRequest", authRequestVariable))
                 .businessKey("user-registration")
                 .withVariablesInReturn(true)
                 .build();
