@@ -3,9 +3,7 @@ package innowise.api_gateway.controller;
 import innowise.api_gateway.dto.error.ErrorDto;
 import innowise.api_gateway.dto.error.ValidationErrorDto;
 import innowise.api_gateway.exception.StatusCodeAbstractException;
-import innowise.api_gateway.exception.service_calls.ClientService4xxException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -20,12 +18,6 @@ import java.util.List;
 
 @ControllerAdvice
 public class ExceptionControllerAdvice {
-    @ExceptionHandler(ClientService4xxException.class)
-    public Mono<ResponseEntity<String>> handleException(ClientService4xxException ex, ServerWebExchange exchange) {
-        exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        return Mono.just(ResponseEntity.status(ex.getHttpStatus()).body(ex.getMessage()));
-    }
-
     @ExceptionHandler(WebExchangeBindException.class)
     public Mono<ResponseEntity<ValidationErrorDto>> handleValidationExceptions(
             WebExchangeBindException ex, ServerWebExchange exchange) {
