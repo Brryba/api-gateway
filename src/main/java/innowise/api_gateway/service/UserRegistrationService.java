@@ -18,11 +18,15 @@ import innowise.api_gateway.exception.camunda.ProcessBpmnException;
 import innowise.api_gateway.exception.service_calls.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,10 +34,16 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class UserRegistrationService {
+    @Value("${camunda.process.registration.maxAttempts}")
+    private Integer maxAttempts;
+
+    @Value("${camunda.process.registration.pullInterval}")
+    private Integer pullInterval;
+
     private final WebClient camundaClient;
     private final ObjectMapper objectMapper;
 
-    public Mono<ProcessStartDto> createUser(UserRequestDto userRequestDto) {
+    public Mono<ResponseEntity<RegistrationProcessResponseDto>> createUser(UserRequestDto userRequestDto) {
         String serializedUser, serializedAuth;
         try {
             serializedUser = objectMapper.writeValueAsString(userRequestDto.getUser());
@@ -65,8 +75,32 @@ public class UserRegistrationService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(camundaRequestDto)
                 .retrieve()
-                .bodyToMono(ProcessStartDto.class);
+                .bodyToMono(ProcessStartDto.class)
+                .flatMap(process -> {
+                    log.info("User creation process started with {} id", process.getId());
+                    return pullRegistrationResultUntilCreated(process.getId());
+                });
     }
+
+    public Mono<ResponseEntity<RegistrationProcessResponseDto>> pullRegistrationResultUntilCreated(UUID processId) {
+        return Flux.interval(Duration.ofSeconds(pullInterval))
+                .take(maxAttempts)
+                .flatMap(i -> checkCreationProcessStatus(processId))
+                .filter(dto -> "COMPLETED".equalsIgnoreCase(dto.getState()))
+                .next()
+                .map(ResponseEntity::ok)
+                .switchIfEmpty(
+                        Mono.just(
+                                ResponseEntity.accepted().body(
+                                        RegistrationProcessResponseDto.builder()
+                                                .state("IN_PROGRESS")
+                                                .processId(processId)
+                                                .build()
+                                )
+                        )
+                );
+    }
+
 
     public Mono<RegistrationProcessResponseDto> checkCreationProcessStatus(UUID processId) {
         return camundaClient.get()

@@ -7,6 +7,7 @@ import innowise.api_gateway.service.UserRegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,8 +26,8 @@ public class UserGatewayController {
     private final UserRegistrationService userRegistrationService;
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public Mono<ProcessStartDto> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<ResponseEntity<RegistrationProcessResponseDto>> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
         return userRegistrationService.createUser(userRequestDto);
     }
 
