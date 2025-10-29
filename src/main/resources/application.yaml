@@ -23,6 +23,8 @@ camunda:
     registration:
       maxAttempts: 5
       pullInterval: 1
+  client:
+    mode: self-managed
 
 services:
   urls:

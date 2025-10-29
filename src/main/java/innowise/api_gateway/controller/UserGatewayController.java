@@ -33,6 +33,7 @@ public class UserGatewayController {
 
     @GetMapping("/registration/{processId}/status")
     public Mono<RegistrationProcessResponseDto> registration(@PathVariable UUID processId) {
-        return userRegistrationService.checkCreationProcessStatus(processId);
+        return null;
+        //return userRegistrationService.checkCreationProcessStatus(processId);
     }
 }

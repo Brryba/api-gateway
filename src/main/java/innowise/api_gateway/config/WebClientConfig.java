@@ -21,7 +21,7 @@ public class WebClientConfig {
     }
 
     @Bean
-    WebClient camundaClient() {
+    WebClient camundaoldClient() {
         return webClientBuilder()
                 .baseUrl(camundaUrl)
                 .build();
