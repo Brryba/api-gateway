@@ -1,7 +1,7 @@
 package innowise.api_gateway.controller;
 
+import innowise.api_gateway.dto.camunda.RegistrationProcessResponseDto;
 import innowise.api_gateway.dto.combined.UserRequestDto;
-import innowise.api_gateway.dto.combined.UserResponseDto;
 import innowise.api_gateway.service.UserRegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class UserGatewayController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<UserResponseDto> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
+    public Mono<RegistrationProcessResponseDto> signup(@Valid @RequestBody UserRequestDto userRequestDto) {
         return userRegistrationService.createUser(userRequestDto);
     }
 }

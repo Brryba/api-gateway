@@ -52,6 +52,7 @@ public class SecurityConfig {
 
                     exchange.pathMatchers(HttpMethod.GET, "/api/item/**").permitAll();
                     exchange.pathMatchers("/api/register").permitAll();
+                    exchange.pathMatchers("api/registration/**").permitAll();
                     exchange.pathMatchers("/actuator/**").permitAll();
                     exchange.anyExchange().authenticated();
                 })

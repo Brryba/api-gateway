@@ -8,7 +8,7 @@ spring:
       enabled: false
 
 security:
-  jwt-key: ${JWT_KEY}
+  jwt-key: ${ACCESS_TOKEN_JWT_SECRET}
 
 server:
   port: 80
@@ -17,6 +17,10 @@ eureka:
   client:
     webclient:
       enabled: false
+
+camunda:
+  client:
+    mode: self-managed
 
 services:
   urls:

@@ -1,48 +1,61 @@
 package innowise.api_gateway.service;
 
-import innowise.api_gateway.dto.auth_service.AuthServiceResponseDto;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import innowise.api_gateway.dto.camunda.RegistrationProcessResponseDto;
 import innowise.api_gateway.dto.combined.UserRequestDto;
-import innowise.api_gateway.dto.combined.UserResponseDto;
-import innowise.api_gateway.dto.user_service.UserServiceResponseDto;
-import innowise.api_gateway.exception.service_calls.ClientService4xxException;
-import innowise.api_gateway.exception.service_calls.RollbackFailedException;
-import innowise.api_gateway.exception.service_calls.UserCreationException;
+import innowise.api_gateway.exception.camunda.ProcessNotStartedException;
+import innowise.api_gateway.exception.service_calls.BadRequestException;
+import io.camunda.client.CamundaClient;
+import io.camunda.client.api.response.ProcessInstanceEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserRegistrationService {
 
-    private final WebClientUtil webClientUtil;
+    private final ObjectMapper objectMapper;
+    private final CamundaClient camundaClient;
 
-    public Mono<UserResponseDto> createUser(UserRequestDto userRequestDto) {
-        return webClientUtil.createUserInAuthService(userRequestDto)
-                .flatMap(authResponse ->
-                        webClientUtil.createUserInUserService(userRequestDto, authResponse.getId())
-                                .map(userResponse -> buildUserResponse(authResponse, userResponse))
-                                .onErrorResume(e -> handleUserServiceFailure(authResponse, e))
-                );
-    }
+    public Mono<RegistrationProcessResponseDto> createUser(UserRequestDto userRequestDto) {
+        String serializedUser, serializedAuth;
+        try {
+            serializedUser = objectMapper.writeValueAsString(userRequestDto.getUser());
+            serializedAuth = objectMapper.writeValueAsString(userRequestDto.getAuth());
+        } catch (JsonProcessingException e) {
+            throw new BadRequestException("Unable to create user. Bad request");
+        }
 
-    private UserResponseDto buildUserResponse(AuthServiceResponseDto auth, UserServiceResponseDto user) {
-        return UserResponseDto.builder()
-                .auth(auth)
-                .user(user)
-                .build();
-    }
+        log.info("User {} creation request received", userRequestDto.getAuth().getLogin());
 
-    private Mono<UserResponseDto> handleUserServiceFailure(AuthServiceResponseDto authResponse, Throwable ex) {
-        log.error("UserService failed for authId={}. Rolling back...", authResponse.getId(), ex);
-        return webClientUtil.rollbackUserInAuthService(authResponse.getId())
-                .onErrorResume(rollbackEx -> {
-                    log.error("CRITICAL: Rollback failed for authId={}", authResponse.getId(), rollbackEx);
-                    return Mono.error(new RollbackFailedException("User creation failed. Try again later."));
+        CompletableFuture<ProcessInstanceEvent> startFuture = camundaClient
+                .newCreateInstanceCommand()
+                .bpmnProcessId("registration_process")
+                .latestVersion()
+                .variables(Map.of(
+                        "userRequest", serializedUser,
+                        "authRequest", serializedAuth))
+                .send()
+                .toCompletableFuture();
+
+        return Mono.fromFuture(startFuture)
+                .map(processInstance -> {
+                    log.info("Started process {} to create user {}", processInstance.getProcessInstanceKey(), userRequestDto.getAuth().getLogin());
+
+                    return RegistrationProcessResponseDto.builder()
+                            .processId(processInstance.getProcessInstanceKey())
+                            .build();
                 })
-                .then(Mono.error(ex instanceof ClientService4xxException ? ex :
-                        new UserCreationException("User creation failed. Try again later.")));
+                .doOnError(e -> {
+                    log.error("Failed to start process for user {} ", userRequestDto.getAuth().getLogin(), e);
+                    throw new ProcessNotStartedException("Failed to start process");
+                });
     }
 }
