@@ -19,10 +19,6 @@ eureka:
       enabled: false
 
 camunda:
-  process:
-    registration:
-      maxAttempts: 5
-      pullInterval: 1
   client:
     mode: self-managed
 
@@ -32,7 +28,6 @@ services:
     auth-service: ${AUTH_SERVICE_URL}
     order-service: ${ORDER_SERVICE_URL}
     payment-service: ${PAYMENT_SERVICE_URL}
-    camunda: ${CAMUNDA_URL}
 
 front-end:
   url: ${FRONT_END_URL:http://localhost:3000}
